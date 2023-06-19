@@ -24,6 +24,8 @@ enum Lugares
   Andar
 };
 
+void Update_prox_lugar();
+
 #pragma region Parte COM
 String inputString = "";
 bool stringComplete = false;
@@ -86,6 +88,7 @@ void setup()
   }
   Serial.println("INI INO");
   // Update_dados();
+  Update_prox_lugar();
 }
 
 void Resultado_recebido(HUSKYLENSResult result)
@@ -120,9 +123,9 @@ void Resultado_recebido(HUSKYLENSResult result)
   }
 }
 
-bool Houve_update_linhas = false;
+bool Houve_update_linhas = true;
 
-int vel_seg1 = 50;
+int vel_seg1 = 30;
 int vel_seg2 = 0;
 
 bool Ativar_Seguir_linha = true;
@@ -131,7 +134,7 @@ int vel_m1 = 0;
 int vel_m2 = 0;
 
 bool estado_ant_L2 = true; // Tem de ser true ou kaboom *Sons de explosão*
-int linhas_passadas1 = 0;  // ident chefe Linhas passadas no chefe.
+int linhas_passadas1 = 1;  // ident chefe Linhas passadas no chefe.
 
 bool estado_ant_R2 = true; // Tem de ser true ou kaboom *Sons de explosão*
 int linhas_passadas2 = 0;  // Linhas passadas nas mesas
@@ -160,11 +163,13 @@ struct Pedido_ir_mesa
 };
 
 Estado estado_crrt = Receber_chefe;
-Lugares Lugar_crrt = Lugares::Desconhecido;
+Lugares Lugar_crrt = Lugares::Zona_chefe;
 
-Lugares Lugar_objetivo = Lugares::Mesa_2_Obter_pedido;
+Lugares Lugar_objetivo = Lugares::Desconhecido;
 
 List<Pedido_ir_mesa> Mesas_p_ir;
+
+int idx_pedido_crt = 0;
 
 Lugares Obter_lugar_crrt(bool skip_andar = false)
 {                                 // Obter lugar crrt a partir das linhas
@@ -281,11 +286,11 @@ String ult_dados_mandados_motores = "";
 void Mandar_dados_motores_MC()
 {
   String novos_dados = String(vel_m1) + ";" + String(vel_m2) + ";" + String(linhas_passadas2) + ";";
-  if (ult_dados_mandados_motores != novos_dados)
-  {
-    Mandar_p_MB_raw(novos_dados);
-    ult_dados_mandados_motores = novos_dados;
-  }
+  // if (ult_dados_mandados_motores != novos_dados)
+  //{
+  Mandar_p_MB_raw(novos_dados);
+  ult_dados_mandados_motores = novos_dados;
+  //}
 }
 
 void Parar_seguir_linha()
@@ -293,6 +298,7 @@ void Parar_seguir_linha()
   Ativar_Seguir_linha = false;
   vel_m1 = 0;
   vel_m2 = 0;
+  Mandar_dados_motores_MC();
   Mandar_dados_motores_MC();
 }
 
@@ -416,7 +422,7 @@ void Dados_recebidos_PC(String dados_raw)
 void Update_prox_lugar()
 {
   Serial.println("Pedidos:");
-  for (size_t i = 0; i < Mesas_p_ir.getSize(); i++)
+  for (int i = 0; i < Mesas_p_ir.getSize(); i++)
   {
     Serial.print("  M:");
     Serial.print(Mesas_p_ir[i].ID_mesa);
@@ -425,7 +431,7 @@ void Update_prox_lugar()
   }
 
   Pedido_ir_mesa melhor;
-
+  bool Encontrou = false;
   int id_mesa_crrt = Obter_mesa(Lugar_crrt);
 
   for (size_t i = 0; i < Mesas_p_ir.getSize(); i++)
@@ -436,14 +442,15 @@ void Update_prox_lugar()
 
     int dist_melhor = melhor.ID_mesa - id_mesa_crrt;
 
-    if (dist_melhor > dist_mesa) // Quanto menor, o melhor.
+    if ((dist_melhor >= dist_mesa && pedido.tipo_de_ir == Tipo_ir_mesa::PReceber_pedidos && melhor.tipo_de_ir != Tipo_ir_mesa::PEntregar_comida) || Mesas_p_ir.getSize() == 1) // Quanto menor, o melhor.
     {
-      if (pedido.tipo_de_ir == Tipo_ir_mesa::PReceber_pedidos && melhor.tipo_de_ir != Tipo_ir_mesa::PEntregar_comida)
-      {
-        melhor = pedido;
-      }
+      idx_pedido_crt = i;
+
+      melhor = pedido;
+      Encontrou = true;
     }
   }
+
   Lugares lugar_final;
 
   if (melhor.ID_mesa == 1)
@@ -482,8 +489,15 @@ void Update_prox_lugar()
     }
   }
 
-  Lugar_objetivo = lugar_final;
-  Serial.println(lugar_final);
+  if (!Encontrou)
+  {
+    // Lugar_objetivo = Zona_chefe;
+    // Serial.println(" S pedidos. Ir chefe");
+  }
+  else
+  {
+    Lugar_objetivo = lugar_final;
+  }
 }
 
 long ultimo_tempo_rec_info = 0; // Ultimo tempo que recebeu info
@@ -609,7 +623,7 @@ void taskSerial()
           pedido.ID_mesa = JSON_recebido[nome_var_ID_mesa];
           pedido.tipo_de_ir = (JSON_recebido[nome_var_tipo_ir_mesa] == 1) ? Tipo_ir_mesa::PReceber_pedidos : Tipo_ir_mesa::PEntregar_comida;
           Mesas_p_ir.add(pedido);
-
+          Houve_update_linhas = true;
           Update_prox_lugar();
         }
       }
@@ -664,21 +678,54 @@ void loop()
   {
     Serial.println("UPDATE");
     Parar_seguir_linha();
+    Parar_seguir_linha();
+    Parar_seguir_linha();
+
+    if (Lugar_objetivo == Lugar_crrt) //
+    {
+      Mesas_p_ir.remove(idx_pedido_crt);
+    }
+    Update_prox_lugar();
 
     Lugar_crrt = Obter_lugar_crrt(true);
-    if (Lugar_objetivo == Lugar_crrt)
+    if (Mesas_p_ir.getSize() == 0)
     {
+      Serial.println("Sem pedidos.");
+      if (Lugar_objetivo != Zona_chefe)
+      {
+        Serial.println("A ir para o chefe...");
+        // Lugar_objetivo = Zona_chefe;
+        // Ativar_Seguir_linha = true;
+      }
+    }
+
+    if (Lugar_objetivo == Lugar_crrt) //
+    {
+
       Parar_seguir_linha();
+      if (Lugar_objetivo == Zona_chefe)
+      {
+        Parar_seguir_linha();
+        Serial.println("No chefe!");
+      }
+      else
+      {
+        Serial.println("Numa mesa!");
+        // Ativar_Seguir_linha = true;
+      }
     }
     else
     {
+      Ativar_Seguir_linha = true;
+      Serial.println("A ir para objetivo...");
+      Serial.println(Lugar_objetivo);
+      Serial.println(Lugar_crrt);
+
       //
     }
     Mandar_stats();
 
-    Update_prox_lugar();
     Houve_update_linhas = false;
-    Ativar_Seguir_linha = true;
   }
 
   taskSerial();
