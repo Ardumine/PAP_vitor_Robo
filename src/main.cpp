@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "HUSKYLENS.h"
-//#include <SoftwareSerial.h>
+// #include <SoftwareSerial.h>
 #include <ArduinoJson.h>
 #include <NeoSWSerial.h>
 #include <classes.h>
@@ -232,8 +232,8 @@ int Obter_mesa(Lugares lugar)
 #pragma region Parte seguir linha e controlo motores
 void Task_seguir_linha(Dados_rec_MC dados_Rec)
 {
-  //vel_m1 = 0;
-  //vel_m2 = 0;
+  // vel_m1 = 0;
+  // vel_m2 = 0;
 
   // 1 branco                   0 preto
   if (dados_Rec.SensorL1 && dados_Rec.SensorR1)
@@ -415,6 +415,14 @@ void Dados_recebidos_PC(String dados_raw)
 
 void Update_prox_lugar()
 {
+  Serial.println("Pedidos:");
+  for (size_t i = 0; i < Mesas_p_ir.getSize(); i++)
+  {
+    Serial.print("  M:");
+    Serial.print(Mesas_p_ir[i].ID_mesa);
+    Serial.print("; T:");
+    Serial.println(Mesas_p_ir[i].tipo_de_ir);
+  }
 
   Pedido_ir_mesa melhor;
 
@@ -475,6 +483,7 @@ void Update_prox_lugar()
   }
 
   Lugar_objetivo = lugar_final;
+  Serial.println(lugar_final);
 }
 
 long ultimo_tempo_rec_info = 0; // Ultimo tempo que recebeu info
@@ -601,14 +610,6 @@ void taskSerial()
           pedido.tipo_de_ir = (JSON_recebido[nome_var_tipo_ir_mesa] == 1) ? Tipo_ir_mesa::PReceber_pedidos : Tipo_ir_mesa::PEntregar_comida;
           Mesas_p_ir.add(pedido);
 
-          Serial.println("Pedidos:");
-          for (size_t i = 0; i < Mesas_p_ir.getSize(); i++)
-          {
-            Serial.print("  M:");
-            Serial.print(Mesas_p_ir[i].ID_mesa);
-            Serial.print("; T:");
-            Serial.println(Mesas_p_ir[i].tipo_de_ir);
-          }
           Update_prox_lugar();
         }
       }
@@ -671,7 +672,7 @@ void loop()
     }
     else
     {
-      // 
+      //
     }
     Mandar_stats();
 
