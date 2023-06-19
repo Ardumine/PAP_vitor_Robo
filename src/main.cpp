@@ -165,7 +165,7 @@ struct Pedido_ir_mesa
 Estado estado_crrt = Receber_chefe;
 Lugares Lugar_crrt = Lugares::Zona_chefe;
 
-Lugares Lugar_objetivo = Lugares::Desconhecido;
+Lugares Lugar_objetivo = Lugares::Zona_chefe;
 
 List<Pedido_ir_mesa> Mesas_p_ir;
 
@@ -180,7 +180,7 @@ Lugares Obter_lugar_crrt(bool skip_andar = false)
 
     return Andar;
 
-  if ((linhas2 == 6 || linhas2 == 0) && linhas1 == 1)
+  if ((linhas2 == 6 || linhas2 == 0) || linhas1 >= 1)
   {
     linhas_passadas1 = 0; // Resetar tudo
     linhas_passadas2 = 0;
@@ -681,26 +681,13 @@ void loop()
     Parar_seguir_linha();
     Parar_seguir_linha();
 
+
+    Lugar_crrt = Obter_lugar_crrt(true);
+
     if (Lugar_objetivo == Lugar_crrt) //
     {
       Mesas_p_ir.remove(idx_pedido_crt);
-    }
-    Update_prox_lugar();
-
-    Lugar_crrt = Obter_lugar_crrt(true);
-    if (Mesas_p_ir.getSize() == 0)
-    {
-      Serial.println("Sem pedidos.");
-      if (Lugar_objetivo != Zona_chefe)
-      {
-        Serial.println("A ir para o chefe...");
-        // Lugar_objetivo = Zona_chefe;
-        // Ativar_Seguir_linha = true;
-      }
-    }
-
-    if (Lugar_objetivo == Lugar_crrt) //
-    {
+      Serial.println("Removido!");
 
       Parar_seguir_linha();
       if (Lugar_objetivo == Zona_chefe)
@@ -711,7 +698,12 @@ void loop()
       else
       {
         Serial.println("Numa mesa!");
+        Serial.println("A fazer coisas...");
+
+        delay(5000);
+        Serial.println("OK");
         // Ativar_Seguir_linha = true;
+        
       }
     }
     else
@@ -723,9 +715,21 @@ void loop()
 
       //
     }
-    Mandar_stats();
+    Update_prox_lugar();
 
+    Mandar_stats();
     Houve_update_linhas = false;
+
+    if (Mesas_p_ir.getSize() == 0)
+    {
+      Serial.println("Sem pedidos.");
+      if (Lugar_objetivo != Zona_chefe)
+      {
+        Serial.println("A ir para o chefe...");
+        Lugar_objetivo = Zona_chefe;
+        Houve_update_linhas = true;
+      }
+    }
   }
 
   taskSerial();
