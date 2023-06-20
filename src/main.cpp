@@ -182,7 +182,7 @@ Lugares Obter_lugar_crrt(bool skip_andar = false)
 
     return Andar;
 
-  if ((linhas2 == 6 || linhas2 == 0) || linhas1 >= 1)
+  if (linhas1 >= 1)
   {
     linhas_passadas1 = 0; // Resetar tudo
     linhas_passadas2 = 0;
@@ -689,6 +689,7 @@ void loop()
 
     if (Lugar_objetivo == Lugar_crrt) //
     {
+      Mandar_stats();
       Mesas_p_ir.remove(idx_pedido_crt);
       Serial.println("Removido!");
 
@@ -720,7 +721,6 @@ void loop()
     }
     Update_prox_lugar();
 
-    Mandar_stats();
     Houve_update_linhas = false;
 
     if (Mesas_p_ir.getSize() == 0)
