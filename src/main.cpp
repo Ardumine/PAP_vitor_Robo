@@ -509,6 +509,8 @@ String cmd_obter_linhas = "obt_l";
 String cmd_set_linhas = "set_l";
 String cmd_obter_stats = "st";
 String cmd_adi_ir_mesa = "aim";
+String cmd_rec_Pedidos = "rp";
+
 
 String nome_var_tipo = "t";
 
