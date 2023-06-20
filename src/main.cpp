@@ -169,6 +169,8 @@ Lugares Lugar_objetivo = Lugares::Zona_chefe;
 
 List<Pedido_ir_mesa> Mesas_p_ir;
 
+Pedido_ir_mesa pedido_crrt;
+
 int idx_pedido_crt = 0;
 
 Lugares Obter_lugar_crrt(bool skip_andar = false)
@@ -430,7 +432,6 @@ void Update_prox_lugar()
     Serial.println(Mesas_p_ir[i].tipo_de_ir);
   }
 
-  Pedido_ir_mesa melhor;
   bool Encontrou = false;
   int id_mesa_crrt = Obter_mesa(Lugar_crrt);
 
@@ -440,22 +441,22 @@ void Update_prox_lugar()
 
     int dist_mesa = pedido.ID_mesa - id_mesa_crrt;
 
-    int dist_melhor = melhor.ID_mesa - id_mesa_crrt;
+    int dist_melhor = pedido_crrt.ID_mesa - id_mesa_crrt;
 
-    if ((dist_melhor >= dist_mesa && pedido.tipo_de_ir == Tipo_ir_mesa::PReceber_pedidos && melhor.tipo_de_ir != Tipo_ir_mesa::PEntregar_comida) || Mesas_p_ir.getSize() == 1) // Quanto menor, o melhor.
+    if (((dist_melhor > dist_mesa) && (pedido.tipo_de_ir == Tipo_ir_mesa::PReceber_pedidos) && (pedido_crrt.tipo_de_ir != Tipo_ir_mesa::PEntregar_comida)) || Mesas_p_ir.getSize() == 1) // Quanto menor, o melhor.
     {
       idx_pedido_crt = i;
 
-      melhor = pedido;
+      pedido_crrt = pedido;
       Encontrou = true;
     }
   }
 
   Lugares lugar_final;
 
-  if (melhor.ID_mesa == 1)
+  if (pedido_crrt.ID_mesa == 1)
   {
-    if (melhor.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
+    if (pedido_crrt.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
     {
       lugar_final = Lugares::Mesa_1_entrega;
     }
@@ -465,9 +466,9 @@ void Update_prox_lugar()
     }
   }
 
-  if (melhor.ID_mesa == 2)
+  if (pedido_crrt.ID_mesa == 2)
   {
-    if (melhor.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
+    if (pedido_crrt.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
     {
       lugar_final = Lugares::Mesa_2_entrega;
     }
@@ -477,9 +478,9 @@ void Update_prox_lugar()
     }
   }
 
-  if (melhor.ID_mesa == 3)
+  if (pedido_crrt.ID_mesa == 3)
   {
-    if (melhor.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
+    if (pedido_crrt.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
     {
       lugar_final = Lugares::Mesa_3_entrega;
     }
