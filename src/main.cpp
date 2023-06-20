@@ -527,6 +527,7 @@ String nome_var_ID_mesa = "idm";
 
 static void evento_Serial_mc(uint8_t c)
 {
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   inputString += (char)c;
 
   // if (c_ch != -1)
@@ -545,13 +546,13 @@ void Mandar_stats()
 
   JSON_recebido[nome_var_tipo] = cmd_obter_stats;
 
-  JSON_recebido[nome_var_linha1] = linhas_passadas1;
-  JSON_recebido[nome_var_linha2] = linhas_passadas2;
+  //JSON_recebido[nome_var_linha1] = linhas_passadas1;
+  //JSON_recebido[nome_var_linha2] = linhas_passadas2;
 
   JSON_recebido[nome_var_Lugar_crrt] = (int)(Lugar_crrt);
   JSON_recebido[nome_var_Lugar_obj] = (int)(Lugar_objetivo);
 
-  JSON_recebido[nome_var_calibrado] = Calibrado ? 1 : 0;
+  //JSON_recebido[nome_var_calibrado] = Calibrado ? 1 : 0;
   String oute = "";
   serializeJson(JSON_recebido, oute);
   Mandar_dados_PC_raw(oute);
@@ -564,7 +565,6 @@ void taskSerial()
   if (stringComplete)
   {
     // delay(100);
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
     if (inputString.startsWith("de_pc"))
     {
