@@ -686,10 +686,10 @@ void loop()
 
 
     Lugar_crrt = Obter_lugar_crrt(true);
+      Mandar_stats();
 
     if (Lugar_objetivo == Lugar_crrt) //
     {
-      Mandar_stats();
       Mesas_p_ir.remove(idx_pedido_crt);
       Serial.println("Removido!");
 
