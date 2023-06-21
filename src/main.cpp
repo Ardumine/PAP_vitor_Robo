@@ -311,6 +311,8 @@ void Dados_recebidos_MC(String dados_raw)
   Dados_rec_MC dados_Rec;
   dados_Rec.A_partir_de_string(inputString);
 
+    digitalWrite(LED_BUILTIN, dados_Rec.Estado_btn);
+
   if (dados_Rec.Tam_cache_mb > 5)
   {
     delay(50 * dados_Rec.Tam_cache_mb);
@@ -580,7 +582,6 @@ void taskSerial()
   if (stringComplete)
   {
     // delay(100);
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
     if (inputString.startsWith("de_pc"))
     {

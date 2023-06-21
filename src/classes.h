@@ -24,6 +24,7 @@ public:
         SensorL2 = getValue(dados,';',4).toInt() == 1;
         SensorR2 = getValue(dados,';',5).toInt() == 1;
         Tam_cache_mb = getValue(dados,';',6).toInt();
+        Estado_btn = getValue(dados,';',7).toInt() == 0;
 
         
     }
@@ -34,6 +35,7 @@ public:
     bool SensorL2 = 0;
     bool SensorR2 = 0;
     int Tam_cache_mb = 0;
+    bool Estado_btn = false;
 };
 
 
