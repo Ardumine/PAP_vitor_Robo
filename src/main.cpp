@@ -28,6 +28,8 @@ void Update_prox_lugar();
 
 #pragma region Parte COM
 String inputString = "";
+List<String> Dados_Recs;
+String string_Rec_incomp = "";
 bool stringComplete = false;
 
 HUSKYLENS huskylens;
@@ -125,7 +127,7 @@ void Resultado_recebido(HUSKYLENSResult result)
 
 bool Houve_update_linhas = true;
 
-int vel_seg1 = 30;
+int vel_seg1 = 40;
 int vel_seg2 = 0;
 
 bool Ativar_Seguir_linha = true;
@@ -421,15 +423,20 @@ void Dados_recebidos_PC(String dados_raw)
 }
 */
 
-void delay_update(int tempo){
+void delay_update(int tempo)
+{
   int temp_ini = millis();
+  interrupts();
   while ((millis() - temp_ini) < tempo)
   {
-    yield();
+    // yield();
+    //
+    if (Serial_MC.available())
+    {
+      Mandar_dados_PC_raw("{" + String('"') + "a" + String('"') + ":" + String(Serial_MC.available()) + "}");
+    }
     delay(1);
-    interrupts();
   }
-  
 }
 void Update_prox_lugar()
 {
@@ -521,7 +528,6 @@ String cmd_obter_stats = "st";
 String cmd_adi_ir_mesa = "aim";
 String cmd_rec_Pedidos = "rp";
 
-
 String nome_var_tipo = "t";
 
 String nome_var_calibrado = "c";
@@ -537,7 +543,6 @@ String nome_var_ID_mesa = "idm";
 
 static void evento_Serial_mc(uint8_t c)
 {
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   inputString += (char)c;
 
   // if (c_ch != -1)
@@ -556,13 +561,13 @@ void Mandar_stats()
 
   JSON_recebido[nome_var_tipo] = cmd_obter_stats;
 
-  //JSON_recebido[nome_var_linha1] = linhas_passadas1;
-  //JSON_recebido[nome_var_linha2] = linhas_passadas2;
+  // JSON_recebido[nome_var_linha1] = linhas_passadas1;
+  // JSON_recebido[nome_var_linha2] = linhas_passadas2;
 
   JSON_recebido[nome_var_Lugar_crrt] = (int)(Lugar_crrt);
   JSON_recebido[nome_var_Lugar_obj] = (int)(Lugar_objetivo);
 
-  //JSON_recebido[nome_var_calibrado] = Calibrado ? 1 : 0;
+  // JSON_recebido[nome_var_calibrado] = Calibrado ? 1 : 0;
   String oute = "";
   serializeJson(JSON_recebido, oute);
   Mandar_dados_PC_raw(oute);
@@ -575,12 +580,12 @@ void taskSerial()
   if (stringComplete)
   {
     // delay(100);
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
     if (inputString.startsWith("de_pc"))
     {
-      vel_m1 = 0;
-      vel_m2 = 0;
-      Mandar_dados_motores_MC();
+
+      Parar_seguir_linha();
       inputString.replace("de_pc", "");
       inputString.replace("\n", "");
       inputString.replace("\r", "");
@@ -591,7 +596,6 @@ void taskSerial()
       }
       else if (inputString.startsWith("{"))
       {
-        // DynamicJsonDocument  JSON_resposta(2048);
 
         StaticJsonDocument<100> JSON_recebido; // 80
 
@@ -635,7 +639,21 @@ void taskSerial()
           Pedido_ir_mesa pedido;
           pedido.ID_mesa = JSON_recebido[nome_var_ID_mesa];
           pedido.tipo_de_ir = (JSON_recebido[nome_var_tipo_ir_mesa] == 1) ? Tipo_ir_mesa::PReceber_pedidos : Tipo_ir_mesa::PEntregar_comida;
-          Mesas_p_ir.add(pedido);
+          bool existe = false;
+
+          for (int i = 0; i < Mesas_p_ir.getSize(); i++)//Serve para verificar se pedido de ir n existe
+          {
+            /* code */
+            Pedido_ir_mesa p_c = Mesas_p_ir.getValue(i);
+            if (pedido.ID_mesa == p_c.ID_mesa && pedido.tipo_de_ir == p_c.tipo_de_ir)
+            {
+              existe = true;
+            }
+          }
+          if (!existe)
+          {
+            Mesas_p_ir.add(pedido);
+          }
           Houve_update_linhas = true;
           Update_prox_lugar();
         }
@@ -694,9 +712,8 @@ void loop()
     Parar_seguir_linha();
     Parar_seguir_linha();
 
-
     Lugar_crrt = Obter_lugar_crrt(true);
-      Mandar_stats();
+    Mandar_stats();
 
     if (Lugar_objetivo == Lugar_crrt) //
     {
@@ -717,7 +734,6 @@ void loop()
         delay_update(5000);
         Serial.println("OK");
         // Ativar_Seguir_linha = true;
-        
       }
     }
     else
