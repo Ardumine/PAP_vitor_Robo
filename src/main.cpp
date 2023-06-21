@@ -127,7 +127,7 @@ void Resultado_recebido(HUSKYLENSResult result)
 
 bool Houve_update_linhas = true;
 
-int vel_seg1 = 55;
+int vel_seg1 = 65;
 int vel_seg2 = 0;
 
 bool Ativar_Seguir_linha = true;
