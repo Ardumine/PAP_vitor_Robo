@@ -127,7 +127,7 @@ void Resultado_recebido(HUSKYLENSResult result)
 
 bool Houve_update_linhas = true;
 
-int vel_seg1 = 40;
+int vel_seg1 = 55;
 int vel_seg2 = 0;
 
 bool Ativar_Seguir_linha = true;
@@ -656,7 +656,7 @@ void taskSerial()
           }
           Houve_update_linhas = true;
           Update_prox_lugar();
-          
+
         }
       }
 
