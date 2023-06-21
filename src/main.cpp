@@ -656,6 +656,7 @@ void taskSerial()
           }
           Houve_update_linhas = true;
           Update_prox_lugar();
+          
         }
       }
 
