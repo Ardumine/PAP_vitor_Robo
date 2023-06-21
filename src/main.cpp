@@ -421,6 +421,16 @@ void Dados_recebidos_PC(String dados_raw)
 }
 */
 
+void delay_update(int tempo){
+  int temp_ini = millis();
+  while ((millis() - temp_ini) < tempo)
+  {
+    yield();
+    delay(1);
+    interrupts();
+  }
+  
+}
 void Update_prox_lugar()
 {
   Serial.println("Pedidos:");
@@ -704,7 +714,7 @@ void loop()
         Serial.println("Numa mesa!");
         Serial.println("A fazer coisas...");
 
-        delay(5000);
+        delay_update(5000);
         Serial.println("OK");
         // Ativar_Seguir_linha = true;
         
