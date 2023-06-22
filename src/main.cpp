@@ -24,7 +24,7 @@ enum Lugares
 };
 
 void LOG(String dados){
-
+  Serial.println(dados);
 }
 
 void Update_prox_lugar();
@@ -71,16 +71,16 @@ void setup()
   // Serial_MC.begin(9600);
   Serial_MC.attachInterrupt(evento_Serial_mc);
   Serial_MC.begin(9600);
-  while (!huskylens.begin(Serial))
+ // while (!huskylens.begin(Serial))
   {
     LOG(F("Begin failed!"));
     //LOG(F("2.Please recheck the connection."));
     delay(200);
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    //break;
+   // break;
   }
 
-  huskylens.writeAlgorithm(ALGORITHM_TAG_RECOGNITION); // Switch the algorithm to object tracking.
+ // huskylens.writeAlgorithm(ALGORITHM_TAG_RECOGNITION); // Switch the algorithm to object tracking.
 
   LOG("INI");
   for (size_t i = 0; i < 10; i++)
@@ -714,12 +714,12 @@ List<int> Pedidos_da_mesa_ler;
 void loop()
 {
   int tempo_ant = millis();
-   if (!huskylens.request()) {
+   //if (!huskylens.request()) {
     //LOG(F("Fail to request data from HUSKYLENS, recheck the connection!"));
-   }
-    else{
+   //}
+   // else{
 
-    }
+   // }
   //LOG(millis() - tempo_ant);
   if (A_fazer_coisas_numa_mesa)
   {
