@@ -143,6 +143,8 @@ int linhas_passadas2 = 0;  // Linhas passadas nas mesas
 
 bool Calibrado = false;
 
+bool Btn_b_pressionado = false;
+
 enum Tipo_ir_mesa
 {
   PEntregar_comida,
@@ -311,8 +313,7 @@ void Dados_recebidos_MC(String dados_raw)
   Dados_rec_MC dados_Rec;
   dados_Rec.A_partir_de_string(inputString);
 
-    digitalWrite(LED_BUILTIN, dados_Rec.Estado_btn);
-
+  Btn_b_pressionado = dados_Rec.Estado_btn;
   if (dados_Rec.Tam_cache_mb > 5)
   {
     delay(50 * dados_Rec.Tam_cache_mb);
@@ -435,7 +436,7 @@ void delay_update(int tempo)
     //
     if (Serial_MC.available())
     {
-      Mandar_dados_PC_raw("{" + String('"') + "a" + String('"') + ":" + String(Serial_MC.available()) + "}");
+      // Mandar_dados_PC_raw("{" + String('"') + "a" + String('"') + ":" + String(Serial_MC.available()) + "}");
     }
     delay(1);
   }
@@ -582,6 +583,7 @@ void taskSerial()
   if (stringComplete)
   {
     // delay(100);
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
     if (inputString.startsWith("de_pc"))
     {
@@ -642,7 +644,7 @@ void taskSerial()
           pedido.tipo_de_ir = (JSON_recebido[nome_var_tipo_ir_mesa] == 1) ? Tipo_ir_mesa::PReceber_pedidos : Tipo_ir_mesa::PEntregar_comida;
           bool existe = false;
 
-          for (int i = 0; i < Mesas_p_ir.getSize(); i++)//Serve para verificar se pedido de ir n existe
+          for (int i = 0; i < Mesas_p_ir.getSize(); i++) // Serve para verificar se pedido de ir n existe
           {
             /* code */
             Pedido_ir_mesa p_c = Mesas_p_ir.getValue(i);
@@ -657,7 +659,6 @@ void taskSerial()
           }
           Houve_update_linhas = true;
           Update_prox_lugar();
-
         }
       }
 
@@ -705,8 +706,25 @@ void Update_lgr_crrt()
 {
 }
 
+bool A_fazer_coisas_numa_mesa = false;
+
 void loop()
 {
+  if (A_fazer_coisas_numa_mesa)
+  {
+    if (Btn_b_pressionado)
+    { // quando acabar fazer coisas mesa
+      for (size_t i = 0; i < 10; i++)
+      {
+        delay(100);
+        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      }
+      Serial.println("Acabou fazer coisas mesa!");
+
+      A_fazer_coisas_numa_mesa = true;
+      Houve_update_linhas = true;
+    }
+  }
   if (Houve_update_linhas)
   {
     Serial.println("UPDATE");
@@ -731,10 +749,9 @@ void loop()
       else
       {
         Serial.println("Numa mesa!");
+        A_fazer_coisas_numa_mesa = true;
         Serial.println("A fazer coisas...");
 
-        delay_update(5000);
-        Serial.println("OK");
         // Ativar_Seguir_linha = true;
       }
     }
@@ -747,20 +764,24 @@ void loop()
 
       //
     }
-    Update_prox_lugar();
 
-    Houve_update_linhas = false;
-
-    if (Mesas_p_ir.getSize() == 0)
+    if (A_fazer_coisas_numa_mesa)
     {
-      Serial.println("Sem pedidos.");
-      if (Lugar_objetivo != Zona_chefe)
+      Update_prox_lugar();
+
+      if (Mesas_p_ir.getSize() == 0)
       {
-        Serial.println("A ir para o chefe...");
-        Lugar_objetivo = Zona_chefe;
-        Houve_update_linhas = true;
+        Serial.println("Sem pedidos.");
+        if (Lugar_objetivo != Zona_chefe)
+        {
+          Serial.println("A ir para o chefe...");
+          Lugar_objetivo = Zona_chefe;
+          Houve_update_linhas = true;
+        }
       }
     }
+
+    Houve_update_linhas = false;
   }
 
   taskSerial();
