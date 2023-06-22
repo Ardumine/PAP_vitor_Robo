@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "HUSKYLENS.h"
-// #include <SoftwareSerial.h>
 #include <ArduinoJson.h>
 #include <NeoSWSerial.h>
 #include <classes.h>
@@ -24,6 +23,10 @@ enum Lugares
   Andar
 };
 
+void LOG(String dados){
+
+}
+
 void Update_prox_lugar();
 
 #pragma region Parte COM
@@ -40,13 +43,13 @@ void Mandar_p_MB_raw(String dados)
 
   Serial_MC.println(dados);
   // Serial_MC.println("");
-  //  Serial.println("M: " + dados);
+  //  LOG("M: " + dados);
 }
 
 void Mandar_dados_PC_raw(String dados)
 {
   Mandar_p_MB_raw("pr_pc" + dados);
-  // Serial.println(dados);
+  // LOG(dados);
   // delay(300);
 }
 
@@ -62,31 +65,30 @@ static void evento_Serial_mc(uint8_t c);
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(115200);
+  Serial.begin(9600);//115200
 
 
   // Serial_MC.begin(9600);
   Serial_MC.attachInterrupt(evento_Serial_mc);
   Serial_MC.begin(9600);
-   Wire.begin();
-  while (!huskylens.begin(Wire))
+  while (!huskylens.begin(Serial))
   {
-    Serial.println(F("Begin failed!"));
-    Serial.println(F("2.Please recheck the connection."));
-    delay(500);
+    LOG(F("Begin failed!"));
+    //LOG(F("2.Please recheck the connection."));
+    delay(200);
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    //  break;
+    //break;
   }
 
   huskylens.writeAlgorithm(ALGORITHM_TAG_RECOGNITION); // Switch the algorithm to object tracking.
 
-  Serial.println("INI");
+  LOG("INI");
   for (size_t i = 0; i < 10; i++)
   {
-    delay(100);
+    delay(10);
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   }
-  Serial.println("INI INO");
+  LOG("INI INO");
   // Update_dados();
   Update_prox_lugar();
 }
@@ -98,7 +100,7 @@ void Resultado_recebido(HUSKYLENSResult result)
   {
     // https://dfimg.dfrobot.com/nobody/wiki/400e09570d1ff647bd5e24da4ef4a0f9.png
 
-    //  Serial.println(String() + F("X:") + result.xCenter + F(" Y:") + result.yCenter + F(" W:") + result.width + F(" H:") + result.height + F(" ID:") + result.ID + F(" Area:") + result.width * result.height) ;
+    //  LOG(String() + F("X:") + result.xCenter + F(" Y:") + result.yCenter + F(" W:") + result.width + F(" H:") + result.height + F(" ID:") + result.ID + F(" Area:") + result.width * result.height) ;
 
     String texto = "";
     texto += String(result.width); // 0
@@ -113,13 +115,13 @@ void Resultado_recebido(HUSKYLENSResult result)
 
     texto += String(result.ID); // 4
 
-    Serial.println(texto);
+    LOG(texto);
 
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   }
   else
   {
-    Serial.println("Object unknown!");
+    LOG("Object unknown!");
   }
 }
 
@@ -343,7 +345,7 @@ void Dados_recebidos_PC(String dados_raw)
   // Mandar_p_MB_raw("\n");
   // Mandar_p_MB_raw("\n");
 
-  Serial.println("rec pc: " + (dados_raw));
+  LOG("rec pc: " + (dados_raw));
   Mandar_p_MB_raw("");
 
   // Mandar_dados_PC_raw("D_OK" + String(dados_raw.length()));
@@ -368,7 +370,7 @@ void Dados_recebidos_PC(String dados_raw)
     // Test if parsing succeeds.
     if (error)
     {
-      Serial.println("ERRO JSON");
+      LOG("ERRO JSON");
       Mandar_dados_PC_raw("EP");
       return;
     }
@@ -389,7 +391,7 @@ void Dados_recebidos_PC(String dados_raw)
 
     JSON_resposta[nome_var_tipo] = tipo_cmd;
 
-    Serial.println("cmd: " + tipo_cmd);
+    LOG("cmd: " + tipo_cmd);
 
     if (tipo_cmd == cmd_obter_linhas) // obter linhas
     {
@@ -441,13 +443,13 @@ void delay_update(int tempo)
 }
 void Update_prox_lugar()
 {
-  Serial.println("Pedidos:");
+  LOG("Pedidos:");
   for (int i = 0; i < Mesas_p_ir.getSize(); i++)
   {
-    Serial.print("  M:");
-    Serial.print(Mesas_p_ir[i].ID_mesa);
-    Serial.print("; T:");
-    Serial.println(Mesas_p_ir[i].tipo_de_ir);
+    //LOG("  M:");
+    //LOG(Mesas_p_ir[i].ID_mesa);
+    //LOG("; T:");
+    //LOG(Mesas_p_ir[i].tipo_de_ir);
   }
 
   bool Encontrou = false;
@@ -511,7 +513,7 @@ void Update_prox_lugar()
   if (!Encontrou)
   {
     // Lugar_objetivo = Zona_chefe;
-    // Serial.println(" S pedidos. Ir chefe");
+    // LOG(" S pedidos. Ir chefe");
   }
   else
   {
@@ -548,7 +550,7 @@ static void evento_Serial_mc(uint8_t c)
 
   // if (c_ch != -1)
   //{
-  //  Serial.println(inChar);
+  //  LOG(inChar);
   //}
   if (c == '\n')
   {
@@ -558,7 +560,8 @@ static void evento_Serial_mc(uint8_t c)
 
 void Mandar_stats()
 {
-  StaticJsonDocument<100> JSON_recebido;
+
+  StaticJsonDocument<80> JSON_recebido;
 
   JSON_recebido[nome_var_tipo] = cmd_obter_stats;
 
@@ -572,7 +575,7 @@ void Mandar_stats()
   String oute = "";
   serializeJson(JSON_recebido, oute);
   Mandar_dados_PC_raw(oute);
-  Serial.println(oute);
+  LOG(oute);
 }
 
 void taskSerial()
@@ -598,14 +601,14 @@ void taskSerial()
       else if (inputString.startsWith("{"))
       {
 
-        StaticJsonDocument<100> JSON_recebido; // 80
+        StaticJsonDocument<80> JSON_recebido; // 80
 
         DeserializationError error = deserializeJson(JSON_recebido, inputString);
 
         if (error)
         {
-          Serial.println("ERRO JSON");
-          Serial.println(inputString);
+          LOG("ERRO JSON");
+          LOG(inputString);
 
           Mandar_dados_PC_raw("EP");
           return;
@@ -613,7 +616,7 @@ void taskSerial()
 
         String tipo_cmd = JSON_recebido[nome_var_tipo]; //.as<String>()
 
-        Serial.println("cmd: " + tipo_cmd);
+        LOG("cmd: " + tipo_cmd);
 
         if (tipo_cmd == cmd_obter_linhas) // obter linhas
         {
@@ -671,12 +674,12 @@ void taskSerial()
 
     if (Espera_de_info_tempo)
     {
-      Serial.println();
-      Serial.println("INFO OK");
+      LOG("");
+      LOG("INFO OK");
       Espera_de_info_tempo = false;
     }
     ultimo_tempo_rec_info = millis();
-    // Serial.println("R: " + inputString);
+    // LOG("R: " + inputString);
 
     inputString = "";
     stringComplete = false;
@@ -686,11 +689,11 @@ void taskSerial()
   {
     if (Espera_de_info_tempo)
     {
-      Serial.print(".");
+      LOG(".");
     }
     else
     {
-      Serial.print("A mandar ped info...");
+      LOG("A mandar ped info...");
     }
     ult_dados_mandados_motores = "";
     Update_dados();
@@ -710,6 +713,14 @@ List<int> Pedidos_da_mesa_ler;
 
 void loop()
 {
+  int tempo_ant = millis();
+   if (!huskylens.request()) {
+    //LOG(F("Fail to request data from HUSKYLENS, recheck the connection!"));
+   }
+    else{
+
+    }
+  //LOG(millis() - tempo_ant);
   if (A_fazer_coisas_numa_mesa)
   {
     if (pedido_crrt.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
@@ -717,7 +728,7 @@ void loop()
       if (Btn_b_pressionado)
       {
 
-        Serial.println("Acabou de entregar!");
+        LOG("Acabou de entregar!");
 
 
 
@@ -732,7 +743,7 @@ void loop()
       if (Btn_b_pressionado)
       {
 
-        Serial.println("Acabou de obter pedidos!");
+        LOG("Acabou de obter pedidos!");
 
         A_fazer_coisas_numa_mesa = false;
         Houve_update_linhas = true;
@@ -741,32 +752,33 @@ void loop()
   }
   if (Houve_update_linhas)
   {
-    Serial.println("UPDATE");
+    LOG("UPDATE");
     Parar_seguir_linha();
     Parar_seguir_linha();
     Parar_seguir_linha();
 
     Lugar_crrt = Obter_lugar_crrt(true);
     Mandar_stats();
+    LOG("UPDATE");
 
     if (!A_fazer_coisas_numa_mesa)
     {
       if (Lugar_objetivo == Lugar_crrt) //
       {
         Mesas_p_ir.remove(idx_pedido_crt);
-        Serial.println("Removido!");
+        LOG("Removido!");
 
         Parar_seguir_linha();
         if (Lugar_objetivo == Zona_chefe)
         {
           Parar_seguir_linha();
-          Serial.println("No chefe!");
+          LOG("No chefe!");
         }
         else
         {
-          Serial.println("Numa mesa!");
+          LOG("Numa mesa!");
           A_fazer_coisas_numa_mesa = true;
-          Serial.println("A fazer coisas...");
+          LOG("A fazer coisas...");
 
           // Ativar_Seguir_linha = true;
         }
@@ -774,9 +786,9 @@ void loop()
       else
       {
         Ativar_Seguir_linha = true;
-        Serial.println("A ir para objetivo...");
-        Serial.println(Lugar_objetivo);
-        Serial.println(Lugar_crrt);
+        LOG("A ir para objetivo...");
+        LOG((String)Lugar_objetivo);
+        LOG((String)Lugar_crrt);
 
         //
       }
@@ -785,14 +797,15 @@ void loop()
 
       if (Mesas_p_ir.getSize() == 0)
       {
-        Serial.println("Sem pedidos.");
+        LOG("Sem pedidos.");
         if (Lugar_objetivo != Zona_chefe)
         {
-          Serial.println("A ir para o chefe...");
+          LOG("A ir para o chefe...");
           Lugar_objetivo = Zona_chefe;
           Houve_update_linhas = true;
         }
       }
+    
     }
 
     Houve_update_linhas = false;
@@ -802,14 +815,14 @@ void loop()
 
   // if (!huskylens.request())
   // {
-  //   Serial.println(F("Erro com huskylens!"));
+  //   LOG(F("Erro com huskylens!"));
   // }
   // else if (!huskylens.isLearned())
   // {
-  //   Serial.println(F("Nothing learned, press learn button on HUSKYLENS to learn one!"));
+  //   LOG(F("Nothing learned, press learn button on HUSKYLENS to learn one!"));
   // }
   // // else if (!huskylens.available())
-  // //   Serial.println(F("No block or arrow appears on the screen!"));
+  // //   LOG(F("No block or arrow appears on the screen!"));
   // else
   // {
   //   while (huskylens.available())

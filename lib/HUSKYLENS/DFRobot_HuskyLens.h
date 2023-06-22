@@ -59,15 +59,6 @@ public:
         isWire = true;
     }
 
-    void beginSoftwareSerialUntilSuccess(int RXPin, int TXPin){
-        static SoftwareSerial mySerial(RXPin, TXPin);
-        mySerial.begin(9600);
-        while (!begin(mySerial))
-        {
-            delay(100);
-        }
-        isWire = false;
-    }
 
 
     bool writeAlgorithm(protocolAlgorithm algorithmType){

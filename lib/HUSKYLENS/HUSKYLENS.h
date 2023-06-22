@@ -157,7 +157,7 @@ class HUSKYLENS
 private:
     TwoWire *wire;
     Stream *stream;
-    unsigned long timeOutDuration = 100;
+    unsigned long timeOutDuration = 50;
     unsigned long timeOutTimer;
     int16_t currentIndex = 0;
     Protocol_t protocolCache;
