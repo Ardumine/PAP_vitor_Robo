@@ -127,7 +127,7 @@ void Resultado_recebido(HUSKYLENSResult result)
 
 bool Houve_update_linhas = true;
 
-int vel_seg1 = 65;
+int vel_seg1 = 50;
 int vel_seg2 = 0;
 
 bool Ativar_Seguir_linha = true;
@@ -712,6 +712,7 @@ void loop()
 {
   if (A_fazer_coisas_numa_mesa)
   {
+
     if (Btn_b_pressionado)
     { // quando acabar fazer coisas mesa
       for (size_t i = 0; i < 10; i++)
@@ -721,7 +722,7 @@ void loop()
       }
       Serial.println("Acabou fazer coisas mesa!");
 
-      A_fazer_coisas_numa_mesa = true;
+      A_fazer_coisas_numa_mesa = false;
       Houve_update_linhas = true;
     }
   }
@@ -735,38 +736,39 @@ void loop()
     Lugar_crrt = Obter_lugar_crrt(true);
     Mandar_stats();
 
-    if (Lugar_objetivo == Lugar_crrt) //
+    if (!A_fazer_coisas_numa_mesa)
     {
-      Mesas_p_ir.remove(idx_pedido_crt);
-      Serial.println("Removido!");
-
-      Parar_seguir_linha();
-      if (Lugar_objetivo == Zona_chefe)
+      if (Lugar_objetivo == Lugar_crrt) //
       {
+        Mesas_p_ir.remove(idx_pedido_crt);
+        Serial.println("Removido!");
+
         Parar_seguir_linha();
-        Serial.println("No chefe!");
+        if (Lugar_objetivo == Zona_chefe)
+        {
+          Parar_seguir_linha();
+          Serial.println("No chefe!");
+        }
+        else
+        {
+          Serial.println("Numa mesa!");
+          A_fazer_coisas_numa_mesa = true;
+          Serial.println("A fazer coisas...");
+
+          // Ativar_Seguir_linha = true;
+        }
       }
       else
       {
-        Serial.println("Numa mesa!");
-        A_fazer_coisas_numa_mesa = true;
-        Serial.println("A fazer coisas...");
+        Ativar_Seguir_linha = true;
+        Serial.println("A ir para objetivo...");
+        Serial.println(Lugar_objetivo);
+        Serial.println(Lugar_crrt);
 
-        // Ativar_Seguir_linha = true;
+        //
       }
-    }
-    else
-    {
-      Ativar_Seguir_linha = true;
-      Serial.println("A ir para objetivo...");
-      Serial.println(Lugar_objetivo);
-      Serial.println(Lugar_crrt);
-
-      //
-    }
-
-    if (A_fazer_coisas_numa_mesa)
-    {
+     
+     
       Update_prox_lugar();
 
       if (Mesas_p_ir.getSize() == 0)
