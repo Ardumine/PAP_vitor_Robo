@@ -33,7 +33,6 @@ String string_Rec_incomp = "";
 bool stringComplete = false;
 
 HUSKYLENS huskylens;
-// NeoSWSerial COM_huskylens(4, 5); // RX, TX
 NeoSWSerial Serial_MC(2, 3);
 
 void Mandar_p_MB_raw(String dados)
@@ -65,13 +64,12 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(115200);
 
-  // COM_huskylens.begin(9600);
 
   // Serial_MC.begin(9600);
   Serial_MC.attachInterrupt(evento_Serial_mc);
   Serial_MC.begin(9600);
-  // Wire.begin();
-  // while (!huskylens.begin(Wire))
+   Wire.begin();
+  while (!huskylens.begin(Wire))
   {
     Serial.println(F("Begin failed!"));
     Serial.println(F("2.Please recheck the connection."));
@@ -80,7 +78,7 @@ void setup()
     //  break;
   }
 
-  // huskylens.writeAlgorithm(ALGORITHM_TAG_RECOGNITION); // Switch the algorithm to object tracking.
+  huskylens.writeAlgorithm(ALGORITHM_TAG_RECOGNITION); // Switch the algorithm to object tracking.
 
   Serial.println("INI");
   for (size_t i = 0; i < 10; i++)
@@ -708,6 +706,8 @@ void Update_lgr_crrt()
 
 bool A_fazer_coisas_numa_mesa = false;
 
+List<int> Pedidos_da_mesa_ler;
+
 void loop()
 {
   if (A_fazer_coisas_numa_mesa)
@@ -715,13 +715,24 @@ void loop()
     if (pedido_crrt.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
     {
       if (Btn_b_pressionado)
-      { // quando acabar fazer coisas mesa
-        for (size_t i = 0; i < 10; i++)
-        {
-          delay(100);
-          digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-        }
-        Serial.println("Acabou fazer coisas mesa!");
+      {
+
+        Serial.println("Acabou de entregar!");
+
+
+
+        Pedidos_da_mesa_ler.clear();
+        A_fazer_coisas_numa_mesa = false;
+        Houve_update_linhas = true;
+      }
+    }
+    else
+    {
+
+      if (Btn_b_pressionado)
+      {
+
+        Serial.println("Acabou de obter pedidos!");
 
         A_fazer_coisas_numa_mesa = false;
         Houve_update_linhas = true;
