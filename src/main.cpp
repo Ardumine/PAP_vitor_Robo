@@ -712,18 +712,20 @@ void loop()
 {
   if (A_fazer_coisas_numa_mesa)
   {
+    if (pedido_crrt.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
+    {
+      if (Btn_b_pressionado)
+      { // quando acabar fazer coisas mesa
+        for (size_t i = 0; i < 10; i++)
+        {
+          delay(100);
+          digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+        }
+        Serial.println("Acabou fazer coisas mesa!");
 
-    if (Btn_b_pressionado)
-    { // quando acabar fazer coisas mesa
-      for (size_t i = 0; i < 10; i++)
-      {
-        delay(100);
-        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+        A_fazer_coisas_numa_mesa = false;
+        Houve_update_linhas = true;
       }
-      Serial.println("Acabou fazer coisas mesa!");
-
-      A_fazer_coisas_numa_mesa = false;
-      Houve_update_linhas = true;
     }
   }
   if (Houve_update_linhas)
@@ -767,8 +769,7 @@ void loop()
 
         //
       }
-     
-     
+
       Update_prox_lugar();
 
       if (Mesas_p_ir.getSize() == 0)
