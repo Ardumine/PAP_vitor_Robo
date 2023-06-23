@@ -37,7 +37,6 @@ List<String> Dados_Recs;
 String string_Rec_incomp = "";
 bool stringComplete = false;
 
-
 NeoSWSerial Serial_MC(8, 9);
 
 void Mandar_p_MB_raw(String dados)
@@ -67,12 +66,9 @@ static void evento_Serial_mc(uint8_t c);
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(115200); // 115200
+  Serial.begin(9600); // 115200
 
   // Serial_MC.begin(9600);
-
-
-   
 
   Serial_MC.attachInterrupt(evento_Serial_mc);
   Serial_MC.begin(9600);
@@ -522,6 +518,27 @@ static void evento_Serial_mc(uint8_t c)
   }
 }
 
+List<int> Numeros_recs;
+
+void Dado_recebido_Camera(int dado){
+  
+  Serial.println(dado);
+}
+
+void Task_update_camera()
+{
+  if (Serial.available())
+  {
+    int rec = Serial.read();
+    if (rec != 13 && rec != 10)
+    {
+      char dado_rec_trans = (char)rec;
+
+      Dado_recebido_Camera(int(dado_rec_trans - '0'));
+    }
+  }
+}
+
 void Mandar_stats()
 {
 
@@ -654,6 +671,7 @@ void taskSerial()
     if (Espera_de_info_tempo)
     {
       LOG(".");
+      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     }
     else
     {
@@ -677,8 +695,9 @@ List<int> Pedidos_da_mesa_ler;
 
 void loop()
 {
+  Task_update_camera();
   int tempo_ant = millis();
-  
+
   // LOG(String(millis() - tempo_ant));
   if (A_fazer_coisas_numa_mesa)
   {
