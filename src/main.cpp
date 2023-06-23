@@ -44,7 +44,6 @@ void Mandar_p_MB_raw(String dados)
 {
 
   Serial_MC.println((dados.c_str()));
-  delay(1);
   // Serial_MC.println("");
   //  LOG("M: " + dados);
 }
@@ -72,7 +71,6 @@ void setup()
 
   // Serial_MC.begin(9600);
 
-  //Serial_HL.begin(9600);
 
    
 
@@ -80,9 +78,9 @@ void setup()
   Serial_MC.begin(9600);
 
   LOG("INI");
-  for (size_t i = 0; i < 10; i++)
+  for (size_t i = 0; i < 20; i++)
   {
-    delay(10);
+    delay(50);
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
   }
   LOG("INI INO");
