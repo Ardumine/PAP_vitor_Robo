@@ -521,7 +521,7 @@ static void evento_Serial_mc(uint8_t c)
 List<int> Numeros_recs;
 
 void Dado_recebido_Camera(int dado){
-  
+
   Serial.println(dado);
 }
 
@@ -529,7 +529,10 @@ void Task_update_camera()
 {
   if (Serial.available())
   {
+      Serial.println("REC");
+
     int rec = Serial.read();
+    
     if (rec != 13 && rec != 10)
     {
       char dado_rec_trans = (char)rec;
