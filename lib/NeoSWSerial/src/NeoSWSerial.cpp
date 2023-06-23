@@ -121,8 +121,9 @@ void NeoSWSerial::listen()
         defined(__AVR_ATtiny85__) 
       TCCR1  = 0x06;  // divide by 32
     #else
-      TCCR2A = 0x00;
-      TCCR2B = 0x03;  // divide by 32
+   //TCCRA
+    //  TCCR2A = 0x00;
+     // TCCR2B = 0x03;  // divide by 32
     #endif
   }
 

@@ -1,9 +1,10 @@
 #include <Arduino.h>
-#include "HUSKYLENS.h"
 #include <ArduinoJson.h>
 #include <NeoSWSerial.h>
 #include <classes.h>
 #include <List.hpp>
+
+#include <Wire.h>
 
 enum Lugares
 {
@@ -23,7 +24,8 @@ enum Lugares
   Andar
 };
 
-void LOG(String dados){
+void LOG(String dados)
+{
   Serial.println(dados);
 }
 
@@ -35,13 +37,14 @@ List<String> Dados_Recs;
 String string_Rec_incomp = "";
 bool stringComplete = false;
 
-HUSKYLENS huskylens;
-NeoSWSerial Serial_MC(2, 3);
+
+NeoSWSerial Serial_MC(8, 9);
 
 void Mandar_p_MB_raw(String dados)
 {
 
-  Serial_MC.println(dados);
+  Serial_MC.println((dados.c_str()));
+  delay(1);
   // Serial_MC.println("");
   //  LOG("M: " + dados);
 }
@@ -65,22 +68,16 @@ static void evento_Serial_mc(uint8_t c);
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(9600);//115200
-
+  Serial.begin(115200); // 115200
 
   // Serial_MC.begin(9600);
+
+  //Serial_HL.begin(9600);
+
+   
+
   Serial_MC.attachInterrupt(evento_Serial_mc);
   Serial_MC.begin(9600);
- // while (!huskylens.begin(Serial))
-  {
-    LOG(F("Begin failed!"));
-    //LOG(F("2.Please recheck the connection."));
-    delay(200);
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-   // break;
-  }
-
- // huskylens.writeAlgorithm(ALGORITHM_TAG_RECOGNITION); // Switch the algorithm to object tracking.
 
   LOG("INI");
   for (size_t i = 0; i < 10; i++)
@@ -91,38 +88,6 @@ void setup()
   LOG("INI INO");
   // Update_dados();
   Update_prox_lugar();
-}
-
-void Resultado_recebido(HUSKYLENSResult result)
-{
-
-  if (result.command == COMMAND_RETURN_BLOCK)
-  {
-    // https://dfimg.dfrobot.com/nobody/wiki/400e09570d1ff647bd5e24da4ef4a0f9.png
-
-    //  LOG(String() + F("X:") + result.xCenter + F(" Y:") + result.yCenter + F(" W:") + result.width + F(" H:") + result.height + F(" ID:") + result.ID + F(" Area:") + result.width * result.height) ;
-
-    String texto = "";
-    texto += String(result.width); // 0
-    texto += ",";
-    texto += String(result.height); // 1
-    texto += ",";
-
-    texto += String(result.xCenter); // 2
-    texto += ",";
-    texto += String(result.yCenter); // 3
-    texto += ",";
-
-    texto += String(result.ID); // 4
-
-    LOG(texto);
-
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-  }
-  else
-  {
-    LOG("Object unknown!");
-  }
 }
 
 bool Houve_update_linhas = true;
@@ -441,21 +406,22 @@ void delay_update(int tempo)
     delay(1);
   }
 }
+
 void Update_prox_lugar()
 {
   LOG("Pedidos:");
   for (int i = 0; i < Mesas_p_ir.getSize(); i++)
   {
-    //LOG("  M:");
-    //LOG(Mesas_p_ir[i].ID_mesa);
-    //LOG("; T:");
-    //LOG(Mesas_p_ir[i].tipo_de_ir);
+    // LOG("  M:");
+    // LOG(Mesas_p_ir[i].ID_mesa);
+    // LOG("; T:");
+    // LOG(Mesas_p_ir[i].tipo_de_ir);
   }
 
   bool Encontrou = false;
   int id_mesa_crrt = Obter_mesa(Lugar_crrt);
 
-  for (size_t i = 0; i < Mesas_p_ir.getSize(); i++)
+  for (int i = 0; i < Mesas_p_ir.getSize(); i++)
   {
     Pedido_ir_mesa pedido = Mesas_p_ir.getValue(i);
 
@@ -561,7 +527,7 @@ static void evento_Serial_mc(uint8_t c)
 void Mandar_stats()
 {
 
-  StaticJsonDocument<80> JSON_recebido;
+  StaticJsonDocument<100> JSON_recebido;
 
   JSON_recebido[nome_var_tipo] = cmd_obter_stats;
 
@@ -714,13 +680,8 @@ List<int> Pedidos_da_mesa_ler;
 void loop()
 {
   int tempo_ant = millis();
-   //if (!huskylens.request()) {
-    //LOG(F("Fail to request data from HUSKYLENS, recheck the connection!"));
-   //}
-   // else{
-
-   // }
-  //LOG(millis() - tempo_ant);
+  
+  // LOG(String(millis() - tempo_ant));
   if (A_fazer_coisas_numa_mesa)
   {
     if (pedido_crrt.tipo_de_ir == Tipo_ir_mesa::PEntregar_comida)
@@ -729,8 +690,6 @@ void loop()
       {
 
         LOG("Acabou de entregar!");
-
-
 
         Pedidos_da_mesa_ler.clear();
         A_fazer_coisas_numa_mesa = false;
@@ -759,7 +718,6 @@ void loop()
 
     Lugar_crrt = Obter_lugar_crrt(true);
     Mandar_stats();
-    LOG("UPDATE");
 
     if (!A_fazer_coisas_numa_mesa)
     {
@@ -767,7 +725,6 @@ void loop()
       {
         Mesas_p_ir.remove(idx_pedido_crt);
         LOG("Removido!");
-
         Parar_seguir_linha();
         if (Lugar_objetivo == Zona_chefe)
         {
@@ -805,7 +762,6 @@ void loop()
           Houve_update_linhas = true;
         }
       }
-    
     }
 
     Houve_update_linhas = false;
