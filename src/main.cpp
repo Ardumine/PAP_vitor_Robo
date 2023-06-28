@@ -26,7 +26,7 @@ enum Lugares
 
 void LOG(String dados)
 {
-  Serial.println(dados);
+  //Serial.println(dados);
 }
 
 void Update_prox_lugar();
@@ -82,11 +82,12 @@ void setup()
   LOG("INI INO");
   // Update_dados();
   Update_prox_lugar();
+  Serial.setTimeout(300);
 }
 
 bool Houve_update_linhas = true;
 
-int vel_seg1 = 50;
+int vel_seg1 = 60;
 int vel_seg2 = 0;
 
 bool Ativar_Seguir_linha = true;
@@ -103,6 +104,8 @@ int linhas_passadas2 = 0;  // Linhas passadas nas mesas
 bool Calibrado = false;
 
 bool Btn_b_pressionado = false;
+float dist_ultra = 0;
+
 
 enum Tipo_ir_mesa
 {
@@ -273,6 +276,7 @@ void Dados_recebidos_MC(String dados_raw)
   dados_Rec.A_partir_de_string(inputString);
 
   Btn_b_pressionado = dados_Rec.Estado_btn;
+  dist_ultra = dados_Rec.Dist_ultra;
   if (dados_Rec.Tam_cache_mb > 5)
   {
     delay(50 * dados_Rec.Tam_cache_mb);
@@ -490,6 +494,9 @@ String cmd_set_linhas = "set_l";
 String cmd_obter_stats = "st";
 String cmd_adi_ir_mesa = "aim";
 String cmd_rec_Pedidos = "rp";
+String cmd_tirar_foto= "tf";
+
+
 
 String nome_var_tipo = "t";
 
@@ -503,6 +510,8 @@ String nome_var_Lugar_obj = "lo";
 
 String nome_var_tipo_ir_mesa = "tim";
 String nome_var_ID_mesa = "idm";
+
+String nome_var_pedidos = "ped";
 
 static void evento_Serial_mc(uint8_t c)
 {
@@ -518,10 +527,20 @@ static void evento_Serial_mc(uint8_t c)
   }
 }
 
-List<int> Numeros_recs;
+List<int> Numeros_rec_camera;
+bool Acabou_ler_camera = false;
 
-void Dado_recebido_Camera(int dado){
-
+void Dado_recebido_Camera(int dado)
+{
+  if (dado == 11)
+  {
+    Acabou_ler_camera = true;
+    Serial.println("FIM!");
+  }
+  else
+  {
+    Numeros_rec_camera.add(dado);
+  }
   Serial.println(dado);
 }
 
@@ -529,16 +548,13 @@ void Task_update_camera()
 {
   if (Serial.available())
   {
-      Serial.println("REC");
 
-    int rec = Serial.read();
-    
-    if (rec != 13 && rec != 10)
-    {
-      char dado_rec_trans = (char)rec;
+    String rec_ = Serial.readString();
+    rec_.replace("\n", "");
+    rec_.replace("\r", "");
+    int rec = rec_.toInt();
 
-      Dado_recebido_Camera(int(dado_rec_trans - '0'));
-    }
+    Dado_recebido_Camera(rec);
   }
 }
 
@@ -645,6 +661,9 @@ void taskSerial()
           Houve_update_linhas = true;
           Update_prox_lugar();
         }
+        else if (tipo_cmd == cmd_tirar_foto){
+          Serial.println("ft");
+        }
       }
 
       // Dados_recebidos_PC(inputString);
@@ -698,6 +717,7 @@ List<int> Pedidos_da_mesa_ler;
 
 void loop()
 {
+
   Task_update_camera();
   int tempo_ant = millis();
 
@@ -711,21 +731,54 @@ void loop()
 
         LOG("Acabou de entregar!");
 
-        Pedidos_da_mesa_ler.clear();
         A_fazer_coisas_numa_mesa = false;
         Houve_update_linhas = true;
+
+        
+        A_fazer_coisas_numa_mesa = false;
+        Houve_update_linhas = true;
+        
       }
     }
     else
     {
 
-      if (Btn_b_pressionado)
+      if (Acabou_ler_camera)
       {
+
+        const int CAPACITY = JSON_ARRAY_SIZE(Numeros_rec_camera.getSize());
+
+        DynamicJsonDocument doc(CAPACITY);
+
+        JsonArray array = doc.to<JsonArray>();
+
+        for (int i = 0; i < Numeros_rec_camera.getSize(); ++i)
+        {
+          array.add((int)(Numeros_rec_camera.getValue(i) + 0));
+        }
+
+        StaticJsonDocument<100> JSON_recebido;
+
+        JSON_recebido.clear();
+
+        JSON_recebido[nome_var_tipo] = cmd_rec_Pedidos;
+
+        JSON_recebido[nome_var_ID_mesa] = pedido_crrt.ID_mesa;
+
+        JSON_recebido[nome_var_pedidos] = array;
+
+        String oute = "";
+        serializeJson(JSON_recebido, oute);
+        Mandar_dados_PC_raw(oute);
+        LOG(oute);
 
         LOG("Acabou de obter pedidos!");
 
+        Numeros_rec_camera.clear();
+
         A_fazer_coisas_numa_mesa = false;
         Houve_update_linhas = true;
+        Acabou_ler_camera = false;
       }
     }
   }
@@ -789,22 +842,4 @@ void loop()
 
   taskSerial();
 
-  // if (!huskylens.request())
-  // {
-  //   LOG(F("Erro com huskylens!"));
-  // }
-  // else if (!huskylens.isLearned())
-  // {
-  //   LOG(F("Nothing learned, press learn button on HUSKYLENS to learn one!"));
-  // }
-  // // else if (!huskylens.available())
-  // //   LOG(F("No block or arrow appears on the screen!"));
-  // else
-  // {
-  //   while (huskylens.available())
-  //   {
-  //     HUSKYLENSResult result = huskylens.read();
-  //     Resultado_recebido(result);
-  //   }
-  // }
 }
